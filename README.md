@@ -153,7 +153,7 @@ budget_buddy/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/budget-buddy.git
+git clone https://github.com/krei-labs/budget-buddy.git
 cd budget-buddy
 ```
 
@@ -193,10 +193,14 @@ The database (`instance/budget_buddy.db`) and a default admin account are create
 
 On first run, if no users exist yet, Budget Buddy seeds one admin account:
 
+<div align="center">
+
 | Field | Value |
-|---|---|
+|:---:|:---:|
 | Username | `admin` |
 | Password | `admin123` |
+
+</div>
 
 **Change this password immediately after your first login** — it's a well-known default and should never be left active outside local development.
 
@@ -265,11 +269,12 @@ This project was developed as a personal/academic project. If you intend to reus
 
 ## 👤 Author
 
-**Your Name**
-_(replace with your name / program / school)_
+**Christian G. Maranan**
+Computer Engineering Student — Major in Machine Learning
+Tanauan City College
 
-- **GitHub:** [@your-username](https://github.com/your-username)
-- **Email:** [you@example.com](mailto:you@example.com)
+- **GitHub:** [@krei-labs](https://github.com/krei-labs)
+- **Email:** [christianmaranan0303@gmail.com](mailto:christianmaranan0303@gmail.com)
 
 ---
 
