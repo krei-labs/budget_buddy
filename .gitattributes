@@ -1,7 +1,0 @@
-# GitHub Linguist configuration for Budget Buddy
-
-# Do not count Flask/Jinja HTML templates in language statistics
-templates/*.html linguist-detectable=false
-
-# Keep Python source files detectable
-*.py linguist-detectable=true
