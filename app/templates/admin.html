@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-center my-3" style="color: var(--text-color); font-weight: 700;"><i class="bi bi-shield-lock"></i> Admin Panel</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title" style="color: var(--text-color);"><i class="bi bi-bar-chart"></i> Site Stats</h5>
+        <p style="color: var(--text-color);"><strong>Total Users:</strong> {{ total_users }}</p>
+        <p style="color: var(--text-color);"><strong>Total Transactions:</strong> {{ total_transactions }}</p>
+        <form method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" name="toggle_maintenance" class="btn btn-warning" title="Toggle Maintenance Mode" aria-label="Toggle Maintenance Mode">
+                <i class="bi bi-tools"></i> {% if maintenance_mode %}Disable{% else %}Enable{% endif %} Maintenance Mode
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title" style="color: var(--text-color);"><i class="bi bi-person-plus"></i> Create New Account</h5>
+        <form method="POST" class="mb-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="username" class="form-label" style="color: var(--text-color);">Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="password" class="form-label" style="color: var(--text-color);">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="email" class="form-label" style="color: var(--text-color);">Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="Email" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="role" class="form-label" style="color: var(--text-color);">Role</label>
+                    <select name="role" class="form-select" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" name="create_account" class="btn btn-success w-100" title="Create a new user account" aria-label="Create Account">
+                        <i class="bi bi-person-plus"></i> Create Account
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title" style="color: var(--text-color);"><i class="bi bi-people"></i> User Management</h5>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover text-center">
+                <thead class="table-primary">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Banned</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ 'Yes' if user.banned else 'No' }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton{{ user.id }}" data-bs-toggle="dropdown" aria-expanded="false" title="Actions for {{ user.username }}" aria-label="Actions for {{ user.username }}">
+                                    <i class="bi bi-gear"></i> Actions
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ user.id }}">
+                                    <li>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" name="reset_password" class="dropdown-item" title="Reset password for {{ user.username }}" aria-label="Reset Password">
+                                                <i class="bi bi-key"></i> Reset Password
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" name="toggle_ban" class="dropdown-item" title="{{ 'Unban' if user.banned else 'Ban' }} {{ user.username }}" aria-label="{{ 'Unban' if user.banned else 'Ban' }}">
+                                                <i class="bi bi-ban"></i> {{ 'Unban' if user.banned else 'Ban' }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% if user.role == 'user' %}
+                                    <li>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" name="promote_user" class="dropdown-item" title="Promote {{ user.username }} to Admin" aria-label="Promote to Admin">
+                                                <i class="bi bi-arrow-up-circle"></i> Promote to Admin
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" name="demote_user" class="dropdown-item" title="Demote {{ user.username }} to User" aria-label="Demote to User">
+                                                <i class="bi bi-arrow-down-circle"></i> Demote to User
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <button type="submit" name="delete_user" class="dropdown-item text-danger" title="Delete {{ user.username }}" aria-label="Delete" onclick="return confirm('Are you sure you want to delete {{ user.username }}?')">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title" style="color: var(--text-color);"><i class="bi bi-envelope"></i> Pending Tickets</h5>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover text-center">
+                <thead class="table-primary">
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Message</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.id }}</td>
+                        <td>{{ ticket.user.username }}</td>
+                        <td>{{ ticket.message }}</td>
+                        <td>{{ ticket.created_at }}</td>
+                        <td>
+                            <form method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                                <button type="submit" name="resolve_ticket" class="btn btn-success btn-sm" title="Mark ticket as resolved" aria-label="Resolve ticket from {{ ticket.user.username }}">
+                                    <i class="bi bi-check-circle"></i> Mark Resolved
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted" style="color: var(--text-color);">No pending tickets.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
