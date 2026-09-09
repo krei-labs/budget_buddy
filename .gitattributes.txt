@@ -1,0 +1,7 @@
+# GitHub Linguist configuration
+
+# Exclude all HTML files from language statistics
+*.html linguist-detectable=false
+
+# Keep Python detectable
+*.py linguist-detectable=true
