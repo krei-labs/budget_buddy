@@ -1,0 +1,39 @@
+# ==============================
+# Budget Buddy Git Ignore
+# ==============================
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Node / package files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases / user data
+*.db
+*.sqlite
+*.sqlite3
+
+# Build / deployment output
+dist/
+build/
+.cache/

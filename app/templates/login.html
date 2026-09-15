@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm login-register">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4" style="color: var(--text-color);">Login to Budget Buddy</h3>
+                <p class="text-center" style="color: var(--text-color); font-size: 1.1rem; line-height: 1.5;">
+                    Manage your income, expenses, and budgets easily with colorful charts and tools. Log in and take control of your finances!
+                </p>
+                <form method="POST" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <label for="username" class="form-label fw-semibold" style="color: var(--text-color);">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required aria-label="Username" />
+                    <label for="password" class="form-label fw-semibold mt-3" style="color: var(--text-color);">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required aria-label="Password" />
+                    <button type="submit" class="btn btn-primary w-100 mt-4">Login</button>
+                </form>
+                <p class="mt-3 text-center text-secondary" style="color: var(--text-color);">
+                    Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

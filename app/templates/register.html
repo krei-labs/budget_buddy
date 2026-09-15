@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4" style="color: var(--text-color);">Create Your Budget Buddy Account</h3>
+                <form method="POST" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-semibold" style="color: var(--text-color);">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username" required aria-label="Username" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold" style="color: var(--text-color);">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required aria-label="Password" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label fw-semibold" style="color: var(--text-color);">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password" required aria-label="Confirm password" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold" style="color: var(--text-color);">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Your full name" required aria-label="Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="age" class="form-label fw-semibold" style="color: var(--text-color);">Age</label>
+                        <input type="number" min="1" class="form-control" id="age" name="age" placeholder="Your age" required aria-label="Age" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthday" class="form-label fw-semibold" style="color: var(--text-color);">Birthday</label>
+                        <input type="date" class="form-control" id="birthday" name="birthday" required aria-label="Birthday" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form

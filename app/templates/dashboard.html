@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Custom Animations */
+    .fade-in {
+        animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .card:hover {
+        transform: scale(1.02);
+        transition: transform 0.3s ease;
+    }
+    .btn:hover {
+        transform: scale(1.05);
+        transition: all 0.3s ease;
+    }
+    .chart-container {
+        animation: fadeIn 1.5s ease-in-out 0.5s both;
+    }
+    .expenses-breakdown-card {
+        background: transparent;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 10px 40px rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .expenses-breakdown-card {
+        background: transparent;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4), 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    [data-theme="dark"] #expenseChart, [data-theme="dark"] #lineChart {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
+<div class="summary-and-transactions-container fade-in">
+
+    <h2 class="text-center my-3" style="color: var(--text-color); font-weight: 700;"><i class="bi bi-graph-up"></i> Personal Finance Tracker</h2>
+
+    <div class="about-section mb-4">
+        <p><strong>Welcome to <strong>Budget Buddy</strong></strong>, your modern companion for effortless personal finance management. Track income and expenses in real-time, visualize spending with interactive charts, and customize categories to fit your lifestyle. Built for simplicity and security, it helps you stay organized, make informed decisions, and achieve financial goals—all from a sleek, responsive web app that works seamlessly on any device.</p>
+        <p><em>Take control of your money today!</em></p>
+    </div>
+
+    <div class="row text-center mb-3 g-3 align-items-stretch">
+        <div class="col-sm-4">
+            <div class="card h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, var(--card-bg), var(--secondary-bg)); border: 2px solid var(--border-color); transition: all 0.3s ease;">
+                <div class="card-body">
+                    <h5 class="card-title" style="white-space: nowrap; color: var(--text-color);"><i class="bi bi-cash-coin"></i> Total Income</h5>
+                    <p class="card-text amount" style="font-size: 1.6rem;">₱{{ "{:,.2f}".format(total_income) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, var(--card-bg), var(--secondary-bg)); border: 2px solid var(--border-color); transition: all 0.3s ease;">
+                <div class="card-body">
+                    <h5 class="card-title" style="white-space: nowrap; color: var(--text-color);"><i class="bi bi-receipt"></i> Total Expenses</h5>
+                    <p class="card-text amount" style="font-size: 1.6rem;">₱{{ "{:,.2f}".format(total_expenses) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, var(--card-bg), var(--secondary-bg)); border: 2px solid var(--border-color); transition: all 0.3s ease;">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: var(--text-color); white-space: nowrap;"><i class="bi bi-wallet2"></i> Balance</h5>
+                    <p class="card-text amount" style="font-size: 1.6rem;">₱{{ "{:,.2f}".format(balance) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="currency-selector-container mb-4 text-center">
+        <label for="currency" class="form-label fw-bold me-2" style="color: var(--text-color);">Select Currency Symbol:</label>
+        <select id="currency" class="form-select form-select-sm d-inline-block w-auto" aria-label="Select Currency Symbol" style="color: var(--text-color); background-color: var(--secondary-bg); border: 1px solid var(--border-color); transition: all 0.3s ease;">
+            <option value="$">Dollar ($)</option>
+            <option value="₱" selected>Peso (₱)</option>
+            <option value="€">Euro (€)</option>
+            <option value="£">Pound (£)</option>
+            <option value="¥">Yen (¥)</option>
+        </select>
+    </div>
+
+    <h3 class="text-center mb-3" style="color: var(--text-color);"><i class="bi bi-plus-circle"></i> Add Transaction</h3>
+    <form method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="d-flex flex-nowrap align-items-end mb-4 justify-content-center" style="gap: 0.5rem;">
+            <div>
+                <label for="date" class="form-label text-nowrap" style="color: var(--text-color); font-size: 0.9rem;">Date</label>
+                <input type="date" class="form-control" id="date" name="date" placeholder="mm/dd/yyyy" aria-label="Transaction date" required style="width: 140px; height: 38px; transition: all 0.3s ease;" />
+            </div>
+            <div>
+                <label for="category" class="form-label text-nowrap" style="color: var(--text-color); font-size: 0.9rem;">Category</label>
+                <input type="text" class="form-control" id="category" name="category" list="categoryOptions" aria-label="Transaction category" required style="width: 120px; height: 38px; transition: all 0.3s ease;" />
+                <datalist id="categoryOptions">
+                    {% for cat in categories %}
+                        <option value="{{ cat }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+            <div>
+                <label for="amount" class="form-label text-nowrap" style="color: var(--text-color); font-size: 0.9rem;">Amount</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="amount" name="amount" aria-label="Transaction amount" required style="width: 120px; height: 38px; transition: all 0.3s ease;" />
+            </div>
+            <div>
+                <label for="type" class="form-label text-nowrap" style="color: var(--text-color); font-size: 0.9rem;">Type</label>
+                <select class="form-select" id="type" name="type" aria-label="Transaction type" required style="width: 120px; height: 38px; transition: all 0.3s ease;">
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+            </div>
+            <div>
+                <label for="notes" class="form-label" style="color: var(--text-color); font-size: 0.9rem;">Notes</label>
+                <input type="text" class="form-control" id="notes" name="notes" placeholder="Optional" aria-label="Transaction notes" style="width: 120px; height: 38px; transition: all 0.3s ease;" />
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="submit" class="btn btn-primary" aria-label="Add Transaction" title="Add a new transaction" style="height: 38px; padding: 0.375rem 0.75rem; transition: all 0.3s ease;">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Date Filter -->
+    <div class="mb-3 text-center">
+        <form method="GET" class="d-inline">
+            <label for="date_filter" class="form-label me-2" style="color: var(--text-color);">Filter Transactions:</label>
+            <select name="date_filter" id="date_filter" class="form-select d-inline w-auto me-2" onchange="toggleSpecificDate()" style="border: 1px solid var(--border-color); transition: all 0.3s ease;">
+                <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All</option>
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                <option value="specific" {% if date_filter == 'specific' %}selected{% endif %}>Specific Date</option>
+            </select>
+            <input type="date" name="specific_date" id="specific_date" class="form-control d-inline w-auto me-2" style="display: none; border: 1px solid var(--border-color); transition: all 0.3s ease;" value="{{ request.args.get('specific_date', '') }}">
+            <button type="submit" class="btn btn-primary" title="Apply the selected filter" style="background: linear-gradient(45deg, var(--primary-color), #5a67d8); transition: all 0.3s ease;">
+                <i class="bi bi-funnel"></i> Apply Filter
+            </button>
+        </form>
+    </div>
+
+    <h3 class="text-center mb-3" style="color: var(--text-color);"><i class="bi bi-table"></i> Transactions</h3>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped align-middle" style="border: 1px solid var(--border-color); transition: all 0.3s ease;">
+            <thead class="table-primary">
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Notes</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions.items %}
+                <tr>
+                    <td>{{ t.date }}</td>
+                    <td>{{ t.category }}</td>
+                    <td class="amount">₱{{ "{:,.2f}".format(t.amount) }}</td>
+                    <td>{{ t.type }}</td>
+                    <td>{{ t.notes or '' }}</td>
+                    <td>
+                        <a href="{{ url_for('main.delete_transaction', id=t.id) }}" class="btn btn-danger btn-sm" aria-label="Delete transaction on {{ t.date }}, {{ t.category }}, amount {{ t.amount }}" title="Delete this transaction" style="background: linear-gradient(45deg, var(--danger-color), #ff6b6b); transition: all 0.3s ease;">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted" style="color: var(--text-color);">No transactions available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Links -->
+    <nav aria-label="Transaction pagination">
+        <ul class="pagination justify-content-center">
+            {% if transactions.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.dashboard', page=transactions.prev_num, date_filter=date_filter, specific_date=request.args.get('specific_date', '')) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for page_num in transactions.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == transactions.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('main.dashboard', page=page_num, date_filter=date_filter, specific_date=request.args.get('specific_date', '')) }}">{{ page_num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+            {% endfor %}
+            {% if transactions.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.dashboard', page=transactions.next_num, date_filter=date_filter, specific_date=request.args.get('specific_date', '')) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="mb-4 d-flex justify-content-center align-items-center flex-column" style="gap: 1rem;">
+        <form method="GET" action="{{ url_for('main.export_transactions') }}" class="d-flex align-items-end" style="gap: 0.5rem;">
+            <div>
+                <label for="export_filter" class="form-label" style="color: var(--text-color); font-size: 0.9rem;">Export Options:</label>
+                <select name="export_filter" id="export_filter" class="form-select" onchange="toggleExportDates()" style="border: 1px solid var(--border-color); transition: all 0.3s ease; width: 180px;">
+                    <option value="all">All Transactions</option>
+                    <option value="month">This Whole Month</option>
+                    <option value="week">This Whole Week</option>
+                    <option value="today">Today</option>
+                    <option value="last_month">Last Month</option>
+                    <option value="last_week">Last Week</option>
+                    <option value="custom">Custom Date Range</option>
+                </select>
+            </div>
+            <div id="export-dates" style="display: none; gap: 0.5rem;" class="d-flex align-items-end">
+                <div>
+                    <label for="start_date" class="form-label" style="color: var(--text-color); font-size: 0.8rem;">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control" style="width: 140px; height: 38px; border: 1px solid var(--border-color); transition: all 0.3s ease;" />
+                </div>
+                <div>
+                    <label for="end_date" class="form-label" style="color: var(--text-color); font-size: 0.8rem;">End Date</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control" style="width: 140px; height: 38px; border: 1px solid var(--border-color); transition: all 0.3s ease;" />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-danger" title="Export transactions based on selected option" style="background: linear-gradient(45deg, var(--danger-color), #ff6b6b); transition: all 0.3s ease; height: 38px;">
+                <i class="bi bi-download"></i> Export to Word
+            </button>
+        </form>
+    </div>
+
+    <div class="card mb-4 expenses-breakdown-card">
+        <div class="card-body">
+            <h3 class="text-center mb-4" style="color: var(--text-color); margin-bottom: 3rem;"><i class="bi bi-pie-chart"></i> Expenses Breakdown</h3>
+            {% if chart_data %}
+            <div class="row">
+                <!-- Pie Chart Section -->
+                <div class="col-lg-6 mb-5">
+                    <div class="text-center mb-3">
+                        <h4 style="background: linear-gradient(45deg, var(--primary-color), #5a67d8); color: white; padding: 0.4rem; border-radius: 0.5rem; border: 2px solid var(--border-color); display: inline-block; font-size: 1.1rem; transition: all 0.3s ease;">Pie Chart</h4>
+                    </div>
+                    <div class="d-flex justify-content-center chart-container">
+                        <canvas id="expenseChart" aria-label="Expense Breakdown Pie Chart" width="350" height="350" style="box-shadow: 0 8px 32px rgba(255, 255, 255, 0.3); border-radius: 0.75rem; transition: all 0.3s ease;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Line Chart Section -->
+                <div class="col-lg-6 mb-5">
+                    <div class="text-center mb-3">
+                        <h4 style="background: linear-gradient(45deg, var(--primary-color), #5a67d8); color: white; padding: 0.4rem; border-radius: 0.5rem; border: 2px solid var(--border-color); display: inline-block; font-size: 1.1rem; transition: all 0.3s ease;">Line Chart</h4>
+                    </div>
+                    <div class="d-flex justify-content-center chart-container">
+                        <canvas id="lineChart" aria-label="Expense Trends Line Chart" width="350" height="350" style="box-shadow: 0 8px 32px rgba(255, 255, 255, 0.3); border-radius: 0.75rem; transition: all 0.3s ease;"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center text-muted" style="color: var(--text-color);">No expenses to display in charts yet. Add some expense transactions to see visualizations!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const currencySelector = document.getElementById('currency');
+
+    function updateCurrencySymbol(symbol) {
+        document.querySelectorAll('.amount').forEach(el => {
+            el.textContent = symbol + el.textContent.replace(/^[^\d\-\.]*/, '');
+        });
+    }
+    updateCurrencySymbol(currencySelector.value);
+    currencySelector.addEventListener('change', () => {
+        updateCurrencySymbol(currencySelector.value);
+    });
+
+    // Pie Chart
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    const initialLabels = JSON.parse('{{ chart_labels|tojson }}') || [];
+    const initialData = JSON.parse('{{ chart_data|tojson }}') || [];
+    const hasData = initialData.length > 0 && initialData.some(v => v > 0);
+    const labels = hasData ? initialLabels : ['No Expenses'];
+    const data = hasData ? initialData : [1];
+    let expenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: hasData 
+                    ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] 
+                    : ['#CCCCCC'],
+                hoverBackgroundColor: hasData 
+                    ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] 
+                    : ['#CCCCCC'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 14 }, color: getComputedStyle(document.body).getPropertyValue('--text-color').trim() }
+                },
+                tooltip: {
+                    enabled: hasData
+                }
+            }
+        }
+    });
+
+    // Line Chart
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    const lineLabels = JSON.parse('{{ line_labels|tojson }}') || [];
+    const lineData = JSON.parse('{{ line_data|tojson }}') || [];
+    let lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: lineLabels,
+            datasets: [{
+                label: 'Expenses Over Time',
+                data: lineData,
+                borderColor: getComputedStyle(document.body).getPropertyValue('--primary-color').trim() || '#FF6384',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text-color').trim() }
+                }
+            },
+            scales: {
+                x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color').trim() } },
+                y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color').trim() } }
+            }
+        }
+    });
+
+    // Date Filter Toggle
+    function toggleSpecificDate() {
+        const filter = document.getElementById('date_filter').value;
+        const specificDate = document.getElementById('specific_date');
+        specificDate.style.display = filter === 'specific' ? 'inline' : 'none';
+    }
+    toggleSpecificDate();
+
+    // Export Dates Toggle
+    function toggleExportDates() {
+        const filter = document.getElementById('export_filter').value;
+        const exportDates = document.getElementById('export-dates');
+        exportDates.style.display = filter === 'custom' ? 'flex' : 'none';
+    }
+    // Run on page load and ensure initial state
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleExportDates();
+    });
+    // Also run immediately in case DOM is already loaded
+    toggleExportDates();
+</script>
+{% endblock %}

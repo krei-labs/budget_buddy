@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Budget Buddy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <style>
+        /* Chatbot Enhancements */
+        #chatbot-btn {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        .chatbot-modal .modal-dialog {
+            max-width: 400px;
+        }
+        .chatbot-modal .modal-body {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .chat-messages {
+            max-height: 250px;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-messages p {
+            margin: 5px 0;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        .chat-messages p strong {
+            color: var(--primary-color);
+        }
+        .quick-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .quick-prompts button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .quick-prompts button:hover {
+            background-color: var(--primary-hover);
+        }
+        @media (max-width: 768px) {
+            .chatbot-modal .modal-dialog {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <style>
+    /* Existing styles... */
+    /* Logo visibility in dark mode */
+    [data-theme="dark"] .navbar-brand img {
+        filter: invert(1) brightness(1.2); /* Inverts colors and slightly brightens for contrast */
+    }
+</style>
+
+<nav class="navbar navbar-expand-lg shadow-sm" style="background: transparent !important; min-height: 40px;"> <!-- Reduced height -->
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}" style="font-weight: 700; font-size: 1.2rem; user-select:none; background: transparent; position: relative;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Budget Buddy Logo" style="height: 50px; width: auto; background: transparent; position: relative; top: wpx;"> <!-- Smaller logo to fit -->
+        </a>
+        <div class="navbar-nav ms-auto align-items-center">
+            {% if current_user.is_authenticated %}
+            <!-- Dropdown Menu for Profile, Theme, and Admin -->
+            <div class="dropdown">
+                <button class="btn btn-link text-decoration-none" type="button" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="User Menu" aria-label="User Menu">
+                    <i class="bi bi-person-circle fs-2" style="color: var(--navbar-text);"></i> <!-- Slightly smaller icon -->
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button class="dropdown-item" id="theme-toggle" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
+                            <i class="bi bi-moon-fill" id="theme-icon"></i> Day/Night Mode
+                        </button>
+                    </li>
+                    {% if current_user.id == 1 or current_user.role == 'admin' %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('main.admin') }}"><i class="bi bi-shield"></i> Admin Panel</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+            <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+    <!-- Profile Modal -->
+    {% if current_user.is_authenticated %}
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background-color: var(--modal-bg); color: var(--text-color);">
+          <div class="modal-header">
+            <h5 class="modal-title" id="profileModalLabel">Your Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close Profile Modal"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Name:</strong> {{ current_user.name }}</p>
+            <p><strong>Age:</strong> {{ current_user.age }}</p>
+            <p><strong>Birthday:</strong> {{ current_user.birthday }}</p>
+            <p><strong>Email:</strong> {{ current_user.email }}</p>
+          </div>
+          <div class="modal-footer" style="background-color: var(--secondary-bg);">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal" data-bs-dismiss="modal" aria-label="Edit Profile Button">
+                <i class="bi bi-pencil"></i> Edit Profile
+            </button>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-danger" aria-label="Logout Button">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background-color: var(--modal-bg); color: var(--text-color);">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close Edit Profile"></button>
+          </div>
+          <form method="POST" action="{{ url_for('main.update_profile') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" required aria-required="true" aria-label="Name" />
+              </div>
+              <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" class="form-control" id="age" name="age" value="{{ current_user.age }}" min="1" required aria-required="true" aria-label="Age" />
+              </div>
+              <div class="mb-3">
+                <label for="birthday" class="form-label">Birthday</label>
+                <input type="date" class="form-control" id="birthday" name="birthday" value="{{ current_user.birthday }}" required aria-required="true" aria-label="Birthday" />
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required aria-required="true" aria-label="Email" />
+              </div>
+              <div class="mb-3">
+                <label for="current_password" class="form-label">Current Password (required for password change)</label>
+                <input type="password" class="form-control" id="current_password" name="current_password" aria-label="Current Password" />
+              </div>
+              <div class="mb-3">
+                <label for="new_password" class="form-label">New Password</label>
+                <input type="password" class="form-control" id="new_password" name="new_password" aria-label="New Password" />
+              </div>
+              <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" aria-label="Confirm New Password" />
+              </div>
+            </div>
+            <div class="modal-footer" style="background-color: var(--secondary-bg);">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <main class="container mt-4" role="main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Chatbot Modal -->
+    <div class="modal fade chatbot-modal" id="chatbotModal" tabindex="-1" aria-labelledby="chatbotModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: var(--modal-bg); color: var(--text-color);">
+                <div class="modal-header" style="background-color: var(--modal-header-bg);">
+                    <h5 class="modal-title" id="chatbotModalLabel">🤖 Budget Buddy Assistant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chat-messages" class="chat-messages">
+                        <p><strong>Bot:</strong> Hey there! 💰 I'm your Budget Buddy assistant. How can I help you today? Try asking about transactions, charts, or tips! 😊</p>
+                    </div>
+                    <div class="quick-prompts">
+                        <button onclick="sendPrompt('how to add transaction')">How to add transaction?</button>
+                        <button onclick="sendPrompt('what is balance')">What is balance?</button>
+                        <button onclick="sendPrompt('help')">Help</button>
+                        <button onclick="sendPrompt('tell me a joke')">Tell me a joke</button>
+                    </div>
+                    <input type="text" id="chat-input" class="form-control" placeholder="Type your question here..." onkeypress="handleChat(event)">
+                    <button id="submit-ticket-btn" class="btn btn-primary mt-2 w-100" onclick="showTicketForm()">Submit a Support Ticket</button>
+                    <div id="ticket-form" style="display: none; margin-top: 10px;">
+                        <form id="ticket-form-element" method="POST" action="{{ url_for('main.submit_ticket') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <textarea name="ticket_message" class="form-control" placeholder="Describe your issue or feedback..." required></textarea>
+                            <button type="submit" class="btn btn-success mt-2">Submit Ticket</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chatbot Button -->
+    <button id="chatbot-btn" class="btn btn-primary position-fixed bottom-0 end-0 m-3 rounded-circle" style="width: 60px; height: 60px; z-index: 1050;" data-bs-toggle="modal" data-bs-target="#chatbotModal" aria-label="Open Chatbot">
+        <i class="bi bi-chat-dots"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            themeIcon.className = theme === 'light' ? 'bi bi-moon-fill fs-4' : 'bi bi-sun-fill fs-4';
+        }
+
+        // Chatbot Script (Enhanced for fun and responsiveness)
+        const responses = {
+            "how to add transaction": "To add a transaction, fill in the date, category, amount, type, and notes in the form above, then click 'Add'. Easy peasy! 📝",
+            "how to delete transaction": "Click the 'Delete' button next to any transaction in the table. Poof, it's gone! 🗑️",
+            "how to export": "Click the 'Export to Word' button below the table. Your data is ready to go! 📄",
+            "what is balance": "Balance is your total income minus total expenses. Keep it positive for a happy wallet! 💸",
+            "help": "I'm here to help! Ask about adding transactions, deleting, exporting, charts, or even a joke. What do you need? 🤔",
+            "tell me a joke": "Why did the budget go to therapy? It had too many unresolved expenses! 😂 Want another?",
+            "hi": "Hello! 👋 Ready to chat about your finances?",
+            "bye": "Goodbye! Come back anytime. 😊",
+            "default": "Hmm, I'm not sure about that. Try asking about transactions, balance, or say 'help' for ideas! 🚀"
+        };
+
+        function handleChat(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('chat-input').value.toLowerCase().trim();
+                const messages = document.getElementById('chat-messages');
+                messages.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+                const response = responses[input] || responses["default"];
+                messages.innerHTML += `<p><strong>Bot:</strong> ${response}</p>`;
+                messages.scrollTop = messages.scrollHeight;
+                document.getElementById('chat-input').value = '';
+            }
+        }
+
+        function sendPrompt(prompt) {
+            document.getElementById('chat-input').value = prompt;
+            handleChat({ key: 'Enter' });
+        }
+
+        function showTicketForm() {
+            document.getElementById('ticket-form').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
