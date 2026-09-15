@@ -1,4 +1,4 @@
-<p align="center">
+<p align="center"> 
   <img src="docs/screenshots/logo.png" width="220" alt="Budget Buddy Logo">
 </p>
 
